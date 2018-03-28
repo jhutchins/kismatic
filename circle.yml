@@ -27,7 +27,7 @@ jobs:
       - run:
           name: Verify reference API documentation is up to date
           command: 
-            "diff -u <(cat docs/swagger.json) <(GOROOT=$(go env GOROOT) tools/swagger_$(go env GOOS) generate spec -b ./pkg/server)"
+            "diff -u <(cat docs/swagger.json) <(GOROOT=$(go env GOROOT) tools/swagger-$(go env GOOS)-$(go env GOARCH) generate spec -b ./pkg/server)"
       - run:
           name: Create release directory # Used for releasing to GH
           command: mkdir release
