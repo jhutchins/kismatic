@@ -14,8 +14,8 @@ var _ = Describe("Mutations", func() {
 	BeforeEach(func() {
 		dir := setupTestWorkingDir()
 		os.Chdir(dir)
-
-		fp := install.FilePlanner{File: "kismatic-cluster.yaml"}
+		planFile := "kismatic-testing.yaml"
+		fp := install.FilePlanner{File: planFile}
 		planOpts := install.PlanTemplateOptions{
 			ClusterName:               "test-cluster-" + generateRandomString(8),
 			InfrastructureProvisioner: "aws",
@@ -26,17 +26,37 @@ var _ = Describe("Mutations", func() {
 		}
 		install.WritePlanTemplate(planOpts, &fp)
 		skipIfAWSCredsMissing()
-		cmd := exec.Command("./kismatic", "install", "provision")
+		planFromFile, err := fp.Read()
+		if err != nil {
+			Expect(err).ToNot(HaveOccurred())
+		}
+		name := planFromFile.Cluster.Name
+		importCmd := exec.Command("./kismatic", "import", planFile)
+		if err := importCmd.Run(); err != nil {
+			Expect(err).ToNot(HaveOccurred())
+		}
+		cmd := exec.Command("./kismatic", "install", "provision", name)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
-		err := cmd.Run()
+		err = cmd.Run()
 		Expect(err).ToNot(HaveOccurred())
 	})
 	AfterEach(func() {
-		cmd := exec.Command("./kismatic", "install", "destroy")
+		planFile := "kismatic-testing.yaml"
+		fp := install.FilePlanner{File: planFile}
+		planFromFile, err := fp.Read()
+		if err != nil {
+			Expect(err).ToNot(HaveOccurred())
+		}
+		name := planFromFile.Cluster.Name
+		importCmd := exec.Command("./kismatic", "import", planFile)
+		if err := importCmd.Run(); err != nil {
+			Expect(err).ToNot(HaveOccurred())
+		}
+		cmd := exec.Command("./kismatic", "install", "destroy", name)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
-		err := cmd.Run()
+		err = cmd.Run()
 		if err != nil {
 			fmt.Printf(`+++++++++++++++++++++++++++++++++++++
 

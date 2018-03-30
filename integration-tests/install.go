@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/apprenda/kismatic/pkg/install"
 	homedir "github.com/mitchellh/go-homedir"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -131,14 +132,25 @@ func installKismaticWithPlan(plan PlanAWS) error {
 	writePlanFile(plan)
 
 	By("Punch it Chewie!")
-	cmd := exec.Command("./kismatic", "install", "apply", "-f", "kismatic-testing.yaml")
+	planFile := "kismatic-testing.yaml"
+	fp := install.FilePlanner{File: planFile}
+	planFromFile, err := fp.Read()
+	if err != nil {
+		return fmt.Errorf("error reading plan: %v", err)
+	}
+	name := planFromFile.Cluster.Name
+	importCmd := exec.Command("./kismatic", "import", planFile)
+	if err := importCmd.Run(); err != nil {
+		return fmt.Errorf("error importing plan: %v", err)
+	}
+	cmd := exec.Command("./kismatic", "install", "apply", name)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
 	if err := cmd.Run(); err != nil {
 		// run diagnostics on error
 		fmt.Println("----- Running diagnose command -----")
-		diagsCmd := exec.Command("./kismatic", "diagnose", "-f", "kismatic-testing.yaml")
+		diagsCmd := exec.Command("./kismatic", "diagnose", name)
 		diagsCmd.Stdout = os.Stdout
 		diagsCmd.Stderr = os.Stderr
 		if errDiags := diagsCmd.Run(); errDiags != nil {
@@ -153,7 +165,18 @@ func validateKismaticWithPlan(plan PlanAWS) error {
 	writePlanFile(plan)
 
 	By("Validate Plan")
-	cmd := exec.Command("./kismatic", "install", "validate", "-f", "kismatic-testing.yaml")
+	planFile := "kismatic-testing.yaml"
+	fp := install.FilePlanner{File: planFile}
+	planFromFile, err := fp.Read()
+	if err != nil {
+		return fmt.Errorf("error reading plan: %v", err)
+	}
+	name := planFromFile.Cluster.Name
+	importCmd := exec.Command("./kismatic", "import", planFile)
+	if err := importCmd.Run(); err != nil {
+		return fmt.Errorf("error importing plan: %v", err)
+	}
+	cmd := exec.Command("./kismatic", "install", "validate", name)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
@@ -214,7 +237,18 @@ func installKismaticWithABadNode() {
 	f.Close()
 
 	By("Validing our plan")
-	cmd := exec.Command("./kismatic", "install", "validate", "-f", f.Name())
+	planFile := "kismatic-testing.yaml"
+	fp := install.FilePlanner{File: planFile}
+	planFromFile, err := fp.Read()
+	if err != nil {
+		Expect(err).ToNot(HaveOccurred())
+	}
+	name := planFromFile.Cluster.Name
+	importCmd := exec.Command("./kismatic", "import", planFile)
+	if err := importCmd.Run(); err != nil {
+		Expect(err).ToNot(HaveOccurred())
+	}
+	cmd := exec.Command("./kismatic", "install", "validate", name)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()
@@ -223,7 +257,7 @@ func installKismaticWithABadNode() {
 	}
 
 	By("Well, try it anyway")
-	cmd = exec.Command("./kismatic", "install", "apply", "-f", f.Name())
+	cmd = exec.Command("./kismatic", "install", "apply", name)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()

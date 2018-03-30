@@ -6,12 +6,25 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/apprenda/kismatic/pkg/install"
+
 	. "github.com/onsi/ginkgo"
 )
 
 func addNodeToCluster(newNode NodeDeets, sshKey string, labels []string, roles []string) error {
 	By("Adding new worker")
-	cmd := exec.Command("./kismatic", "install", "add-node", "-f", "kismatic-testing.yaml", "--roles", strings.Join(roles, ","), newNode.Hostname, newNode.PublicIP, newNode.PrivateIP)
+	planFile := "kismatic-testing.yaml"
+	fp := install.FilePlanner{File: planFile}
+	plan, err := fp.Read()
+	if err != nil {
+		return fmt.Errorf("error reading plan: %v", err)
+	}
+	name := plan.Cluster.Name
+	importCmd := exec.Command("./kismatic", "import", planFile)
+	if err := importCmd.Run(); err != nil {
+		return fmt.Errorf("error importing plan: %v", err)
+	}
+	cmd := exec.Command("./kismatic", "install", "add-node", name, "--roles", strings.Join(roles, ","), newNode.Hostname, newNode.PublicIP, newNode.PrivateIP)
 	if len(labels) > 0 {
 		cmd.Args = append(cmd.Args, "--labels", strings.Join(labels, ","))
 	}
