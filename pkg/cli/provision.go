@@ -17,10 +17,21 @@ import (
 func NewCmdProvision(in io.Reader, out io.Writer, opts *installOpts) *cobra.Command {
 	provisionOpts := provision.ProvisionOpts{}
 	cmd := &cobra.Command{
-		Use:   "provision",
+		Use:   "provision CLUSTER_NAME",
 		Short: "provision your Kubernetes cluster",
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 1 {
+				return cmd.Usage()
+			}
+			return nil
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fp := &install.FilePlanner{File: opts.planFilename}
+			clusterName := args[0]
+			if exists, err := CheckClusterExists(clusterName); !exists {
+				return err
+			}
+			planPath, _, _ := generateDirsFromName(clusterName)
+			fp := &install.FilePlanner{File: planPath}
 			plan, err := fp.Read()
 			if err != nil {
 				return fmt.Errorf("unable to read plan file: %v", err)
@@ -49,7 +60,7 @@ func NewCmdProvision(in io.Reader, out io.Writer, opts *installOpts) *cobra.Comm
 				return err
 			}
 			if err := fp.Write(updatedPlan); err != nil {
-				return fmt.Errorf("error writing updated plan file to %s: %v", opts.planFilename, err)
+				return fmt.Errorf("error writing updated plan file to %s: %v", planPath, err)
 			}
 			return nil
 		},
@@ -61,10 +72,21 @@ func NewCmdProvision(in io.Reader, out io.Writer, opts *installOpts) *cobra.Comm
 // NewCmdDestroy creates a new destroy command
 func NewCmdDestroy(in io.Reader, out io.Writer, opts *installOpts) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "destroy",
+		Use:   "destroy CLUSTER_NAME",
 		Short: "destroy your provisioned cluster",
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 1 {
+				return cmd.Usage()
+			}
+			return nil
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fp := &install.FilePlanner{File: opts.planFilename}
+			clusterName := args[0]
+			if exists, err := CheckClusterExists(clusterName); !exists {
+				return err
+			}
+			planPath, _, _ := generateDirsFromName(clusterName)
+			fp := &install.FilePlanner{File: planPath}
 			plan, err := fp.Read()
 			if err != nil {
 				return fmt.Errorf("unable to read plan file: %v", err)

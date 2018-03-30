@@ -50,14 +50,12 @@ Nodes in the cluster are upgraded in the following order:
 		},
 	}
 
-	cmd.PersistentFlags().StringVar(&opts.generatedAssetsDir, "generated-assets-dir", "generated", "path to the directory where assets generated during the installation process will be stored")
 	cmd.PersistentFlags().BoolVar(&opts.verbose, "verbose", false, "enable verbose logging from the installation")
 	cmd.PersistentFlags().StringVarP(&opts.outputFormat, "output", "o", "simple", "installation output format (options \"simple\"|\"raw\")")
 	cmd.PersistentFlags().BoolVar(&opts.skipPreflight, "skip-preflight", false, "skip upgrade pre-flight checks")
 	cmd.PersistentFlags().BoolVar(&opts.restartServices, "restart-services", false, "force restart cluster services (Use with care)")
 	cmd.PersistentFlags().BoolVar(&opts.partialAllowed, "partial-ok", false, "allow the upgrade of ready nodes, and skip nodes that have been deemed unready for upgrade")
 	cmd.PersistentFlags().BoolVar(&opts.dryRun, "dry-run", false, "simulate the upgrade, but don't actually upgrade the cluster")
-	addPlanFileFlag(cmd.PersistentFlags(), &opts.planFile)
 
 	// Subcommands
 	cmd.AddCommand(NewCmdUpgradeOffline(in, out, &opts))
@@ -68,7 +66,7 @@ Nodes in the cluster are upgraded in the following order:
 // NewCmdUpgradeOffline returns the command for running offline upgrades
 func NewCmdUpgradeOffline(in io.Reader, out io.Writer, opts *upgradeOpts) *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "offline",
+		Use:   "offline CLUSTER_NAME",
 		Short: "Perform an offline upgrade of your Kubernetes cluster",
 		Long: `Perform an offline upgrade of your Kubernetes cluster.
 
@@ -80,7 +78,19 @@ Performing an offline upgrade could result in loss of critical data and reduced 
 availability. For this reason, this method should not be used for clusters that are housing
 production workloads.
 `,
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 1 {
+				return cmd.Usage()
+			}
+			return nil
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			clusterName := args[0]
+			if exists, err := CheckClusterExists(clusterName); !exists {
+				return err
+			}
+			planPath, generatedPath, _ := generateDirsFromName(clusterName)
+			opts.planFile, opts.generatedAssetsDir = planPath, generatedPath
 			return doUpgrade(in, out, opts)
 		},
 	}
@@ -91,7 +101,7 @@ production workloads.
 // NewCmdUpgradeOnline returns the command for running online upgrades
 func NewCmdUpgradeOnline(in io.Reader, out io.Writer, opts *upgradeOpts) *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "online",
+		Use:   "online CLUSTER_NAME",
 		Short: "Perform an online upgrade of your Kubernetes cluster",
 		Long: `Perform an online upgrade of your Kubernetes cluster.
 
@@ -102,7 +112,19 @@ be printed, and the upgrade will not proceed.
 If the node under upgrade is a Kubernetes node, it is cordoned and drained of workloads
 before any changes are applied.
 `,
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 1 {
+				return cmd.Usage()
+			}
+			return nil
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			clusterName := args[0]
+			if exists, err := CheckClusterExists(clusterName); !exists {
+				return err
+			}
+			planPath, generatedPath, _ := generateDirsFromName(clusterName)
+			opts.planFile, opts.generatedAssetsDir = planPath, generatedPath
 			opts.online = true
 			return doUpgrade(in, out, opts)
 		},
