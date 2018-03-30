@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/apprenda/kismatic/pkg/install"
 	homedir "github.com/mitchellh/go-homedir"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -189,7 +190,17 @@ func getBadSSHKeyFile() (string, error) {
 }
 
 func runValidate(planFile string) error {
-	cmd := exec.Command("./kismatic", "install", "validate", "-f", planFile)
+	fp := install.FilePlanner{File: planFile}
+	planFromFile, err := fp.Read()
+	if err != nil {
+		FailIfError(err, "Couldn't read from plan")
+	}
+	clusterName := planFromFile.Cluster.Name
+	importCmd := exec.Command("./kismatic", "import", planFile)
+	if err := importCmd.Run(); err != nil {
+		FailIfError(err, "Couldn't import plan")
+	}
+	cmd := exec.Command("./kismatic", "install", "validate", clusterName)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()

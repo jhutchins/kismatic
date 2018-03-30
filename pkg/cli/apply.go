@@ -129,13 +129,18 @@ func (c *applyCmd) run() error {
 
 	util.PrintColor(c.out, util.Green, "\nThe cluster was installed successfully!\n")
 	fmt.Fprintln(c.out)
-
+	fp := c.planner
+	planFromFile, err := fp.Read()
+	if err != nil {
+		return err
+	}
+	clusterName := planFromFile.Cluster.Name
 	msg := "- To use the generated kubeconfig file with kubectl:" +
 		"\n    * use \"./kubectl --kubeconfig %s/kubeconfig\"" +
 		"\n    * or copy the config file \"cp %[1]s/kubeconfig ~/.kube/config\"\n"
 	util.PrintColor(c.out, util.Blue, msg, c.generatedAssetsDir)
-	util.PrintColor(c.out, util.Blue, "- To view the Kubernetes dashboard: \"./kismatic dashboard\"\n")
-	util.PrintColor(c.out, util.Blue, "- To SSH into a cluster node: \"./kismatic ssh etcd|master|worker|storage|$node.host\"\n")
+	util.PrintColor(c.out, util.Blue, "- To view the Kubernetes dashboard: \"./kismatic dashboard "+clusterName+"\n")
+	util.PrintColor(c.out, util.Blue, "- To SSH into a cluster node: \"./kismatic ssh "+clusterName+" etcd|master|worker|storage|$node.host\"\n")
 	fmt.Fprintln(c.out)
 
 	return nil

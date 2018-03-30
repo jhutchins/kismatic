@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os/exec"
 
+	"github.com/apprenda/kismatic/pkg/install"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -33,7 +34,18 @@ func assertClusterVersionIsCurrent() {
 
 func assertClusterVersion(version string) {
 	By("Calling ./kismatic info to get the cluster's version")
-	cmd := exec.Command("./kismatic", "info", "-f", "kismatic-testing.yaml", "-o", "json")
+	planFileName := "kismatic-testing.yaml"
+	fp := install.FilePlanner{File: planFileName}
+	planFromFile, err := fp.Read()
+	if err != nil {
+		FailIfError(err, "Couldn't read from plan")
+	}
+	clusterName := planFromFile.Cluster.Name
+	importCmd := exec.Command("./kismatic", "import", planFileName)
+	if err := importCmd.Run(); err != nil {
+		FailIfError(err, "Couldn't import plan")
+	}
+	cmd := exec.Command("./kismatic", "info", clusterName, "-o", "json")
 	out, err := cmd.Output()
 	FailIfError(err)
 	info := infoOutput{}

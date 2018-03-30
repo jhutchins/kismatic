@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"time"
 
+	"github.com/apprenda/kismatic/pkg/install"
 	. "github.com/onsi/ginkgo"
 )
 
@@ -268,16 +269,27 @@ func extractCurrentKismaticInstaller() {
 }
 func upgradeCluster(online bool) {
 	// Perform upgrade
-	cmd := exec.Command("./kismatic", "upgrade", "offline", "-f", "kismatic-testing.yaml")
+	planFileName := "kismatic-testing.yaml"
+	fp := install.FilePlanner{File: planFileName}
+	planFromFile, err := fp.Read()
+	if err != nil {
+		FailIfError(err, "Couldn't read from plan")
+	}
+	clusterName := planFromFile.Cluster.Name
+	importCmd := exec.Command("./kismatic", "import", planFileName)
+	if err := importCmd.Run(); err != nil {
+		FailIfError(err, "Couldn't import plan")
+	}
+	cmd := exec.Command("./kismatic", "upgrade", "offline", clusterName)
 	if online {
-		cmd = exec.Command("./kismatic", "upgrade", "online", "-f", "kismatic-testing.yaml", "--ignore-safety-checks")
+		cmd = exec.Command("./kismatic", "upgrade", "online", clusterName, "--ignore-safety-checks")
 	}
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	if err := cmd.Run(); err != nil {
 		fmt.Println("Running diagnostics command")
 		// run diagnostics on error
-		diagsCmd := exec.Command("./kismatic", "diagnose", "-f", "kismatic-testing.yaml")
+		diagsCmd := exec.Command("./kismatic", "diagnose", clusterName)
 		diagsCmd.Stdout = os.Stdout
 		diagsCmd.Stderr = os.Stderr
 		if errDiags := diagsCmd.Run(); errDiags != nil {

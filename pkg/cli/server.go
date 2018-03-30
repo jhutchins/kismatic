@@ -64,7 +64,10 @@ If cert-file or key-file are not provided, a self-signed CA will be used to crea
 
 func doServer(stdout io.Writer, options serverOptions) error {
 	logger := log.New(stdout, "[kismatic] ", log.LstdFlags|log.Lshortfile)
-
+	parent, _ := filepath.Split(options.dbFile)
+	if err := os.MkdirAll(parent, 0700); err != nil {
+		logger.Fatalf("Error creating store directory structure: %v", err)
+	}
 	// Create the store
 	s, err := store.New(options.dbFile, 0600, logger)
 	if err != nil {

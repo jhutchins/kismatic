@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/apprenda/kismatic/pkg/install"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -19,8 +20,18 @@ var _ = Describe("install step commands", func() {
 			WithMiniInfrastructure(Ubuntu1604LTS, aws, func(node NodeDeets, sshKey string) {
 				err := installKismaticMini(node, sshKey)
 				Expect(err).ToNot(HaveOccurred())
-
-				c := exec.Command("./kismatic", "install", "step", "_kube-apiserver.yaml", "-f", "kismatic-testing.yaml")
+				planFile := "kismatic-testing.yaml"
+				fp := install.FilePlanner{File: planFile}
+				planFromFile, err := fp.Read()
+				if err != nil {
+					Expect(err).ToNot(HaveOccurred())
+				}
+				name := planFromFile.Cluster.Name
+				importCmd := exec.Command("./kismatic", "import", planFile)
+				if err := importCmd.Run(); err != nil {
+					Expect(err).ToNot(HaveOccurred())
+				}
+				c := exec.Command("./kismatic", "install", "step", name, "_kube-apiserver.yaml")
 				c.Stdout = os.Stdout
 				c.Stderr = os.Stderr
 				err = c.Run()
