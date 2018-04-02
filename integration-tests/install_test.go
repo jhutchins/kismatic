@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 	"time"
+	"path/filepath"
 
 	yaml "gopkg.in/yaml.v2"
 
@@ -46,11 +47,11 @@ var _ = Describe("kismatic", func() {
 				Expect(helpText).To(ContainSubstring("2 ingress nodes"))
 				Expect(helpText).To(ContainSubstring("0 storage nodes"))
 				Expect(helpText).To(ContainSubstring("0 nfs volumes"))
-
-				Expect(FileExists("kismatic-cluster.yaml")).To(Equal(true))
+				file := filepath.Join("clusters","kubernetes","kismatic-cluster.yaml")
+				Expect(FileExists(file)).To(Equal(true))
 
 				By("Reading generated plan file")
-				yamlBytes, err := ioutil.ReadFile("kismatic-cluster.yaml")
+				yamlBytes, err := ioutil.ReadFile(file)
 				if err != nil {
 					Fail("Could not read cluster file")
 				}

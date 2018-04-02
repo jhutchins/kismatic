@@ -4,20 +4,28 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 
 	"github.com/apprenda/kismatic/pkg/install"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
+var clusterNames,clusterPaths []string
+var name, path string
+
 var _ = Describe("Mutations", func() {
+
 	BeforeEach(func() {
 		dir := setupTestWorkingDir()
 		os.Chdir(dir)
-		planFile := "kismatic-testing.yaml"
-		fp := install.FilePlanner{File: planFile}
+		name := "test-cluster-" + generateRandomString(8)
+		path := filepath.Join("clusters", name, "kismatic-cluster.yaml")
+		clusterNames = append(clusterNames, name)
+		clusterPaths = append(clusterPaths, path)
+		fp := install.FilePlanner{File: path}
 		planOpts := install.PlanTemplateOptions{
-			ClusterName:               "test-cluster-" + generateRandomString(8),
+			ClusterName:               name,
 			InfrastructureProvisioner: "aws",
 			EtcdNodes:                 2,
 			MasterNodes:               2,
@@ -26,39 +34,20 @@ var _ = Describe("Mutations", func() {
 		}
 		install.WritePlanTemplate(planOpts, &fp)
 		skipIfAWSCredsMissing()
-		planFromFile, err := fp.Read()
-		if err != nil {
-			Expect(err).ToNot(HaveOccurred())
-		}
-		name := planFromFile.Cluster.Name
-		importCmd := exec.Command("./kismatic", "import", planFile)
-		if err := importCmd.Run(); err != nil {
-			Expect(err).ToNot(HaveOccurred())
-		}
 		cmd := exec.Command("./kismatic", "install", "provision", name)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
-		err = cmd.Run()
+		err := cmd.Run()
 		Expect(err).ToNot(HaveOccurred())
 	})
-	AfterEach(func() {
-		planFile := "kismatic-testing.yaml"
-		fp := install.FilePlanner{File: planFile}
-		planFromFile, err := fp.Read()
-		if err != nil {
-			Expect(err).ToNot(HaveOccurred())
-		}
-		name := planFromFile.Cluster.Name
-		importCmd := exec.Command("./kismatic", "import", planFile)
-		if err := importCmd.Run(); err != nil {
-			Expect(err).ToNot(HaveOccurred())
-		}
+	AfterEach(func () {
 		cmd := exec.Command("./kismatic", "install", "destroy", name)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
-		err = cmd.Run()
+		err := cmd.Run()
 		if err != nil {
-			fmt.Printf(`+++++++++++++++++++++++++++++++++++++
+			fmt.Printf(`				
++++++++++++++++++++++++++++++++++++++
 
 ERROR DESTROYING CLUSTERS ON AWS. MUST BE CLEANED UP MANUALLY.
 
@@ -69,16 +58,17 @@ The error: %v
 		Expect(err).ToNot(HaveOccurred())
 	})
 	Describe("Attempting to mutate a cluster", func() {
-		Context("by scaling the cluster up", func() {
+		Context("by scaling the cluster", func() {
 			It("should scale up without any overrides", func() {
-				planFileName := "kismatic-cluster.yaml"
-				fp := &install.FilePlanner{File: planFileName}
+				name, clusterNames = clusterNames[0], clusterNames[1:]
+				path, clusterPaths = clusterPaths[0], clusterPaths[1:]
+				fp := &install.FilePlanner{File: path}
 				plan, err := fp.Read()
 				Expect(err).NotTo(HaveOccurred())
 				plan.Worker.ExpectedCount++
 				plan.Master.ExpectedCount++
 				fp.Write(plan)
-				cmd := exec.Command("./kismatic", "install", "provision")
+				cmd := exec.Command("./kismatic", "install", "provision", name)
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
 				err = cmd.Run()
@@ -87,13 +77,14 @@ The error: %v
 		})
 		Context("by scaling the cluster down with the override", func() {
 			It("should scale down with -allow-destruction", func() {
-				planFileName := "kismatic-cluster.yaml"
-				fp := &install.FilePlanner{File: planFileName}
+				name, clusterNames = clusterNames[0], clusterNames[1:]
+				path, clusterPaths = clusterPaths[0], clusterPaths[1:]
+				fp := &install.FilePlanner{File: path}
 				plan, err := fp.Read()
 				Expect(err).NotTo(HaveOccurred())
 				plan.Worker.ExpectedCount--
 				fp.Write(plan)
-				cmd := exec.Command("./kismatic", "install", "provision", "--allow-destruction")
+				cmd := exec.Command("./kismatic", "install", "provision", name, "--allow-destruction")
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
 				err = cmd.Run()
@@ -102,13 +93,14 @@ The error: %v
 		})
 		Context("by scaling the cluster down without the override", func() {
 			It("should fail to scale down", func() {
-				planFileName := "kismatic-cluster.yaml"
-				fp := &install.FilePlanner{File: planFileName}
+				name, clusterNames = clusterNames[0], clusterNames[1:]
+				path, clusterPaths = clusterPaths[0], clusterPaths[1:]
+				fp := &install.FilePlanner{File: path}
 				plan, err := fp.Read()
 				Expect(err).NotTo(HaveOccurred())
 				plan.Worker.ExpectedCount--
 				fp.Write(plan)
-				cmd := exec.Command("./kismatic", "install", "provision")
+				cmd := exec.Command("./kismatic", "install", "provision", name)
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
 				err = cmd.Run()
