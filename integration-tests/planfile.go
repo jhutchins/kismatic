@@ -1,5 +1,16 @@
 package integration_tests
 
+import (
+	"fmt"
+	"os/exec"
+
+	"github.com/apprenda/kismatic/pkg/install"
+)
+
+const (
+	defaultPlanFile = "kismatic-testing.yaml"
+)
+
 type ClusterPlan struct {
 	Cluster struct {
 		Name                       string
@@ -52,4 +63,26 @@ type NodePlan struct {
 	host       string
 	ip         string
 	internalip string
+}
+
+func runImport(pfs ...string) (string, error) {
+	var planFile string
+	if len(pfs) == 0 {
+		planFile = defaultPlanFile
+	} else if len(pfs) == 1 {
+		planFile = pfs[0]
+	} else {
+		return "", fmt.Errorf("runImport can only be passed either 0 or 1 arguments. 0 uses the default testing plan file")
+	}
+	fp := install.FilePlanner{File: planFile}
+	planFromFile, err := fp.Read()
+	if err != nil {
+		return "", fmt.Errorf("error reading plan prior to import: %v", err)
+	}
+	clusterName := planFromFile.Cluster.Name
+	importCmd := exec.Command("./kismatic", "import", planFile)
+	if err := importCmd.Run(); err != nil {
+		return "", fmt.Errorf("error running kismatic import: %v", err)
+	}
+	return clusterName, nil
 }

@@ -6,22 +6,14 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/apprenda/kismatic/pkg/install"
 	"github.com/apprenda/kismatic/pkg/retry"
 )
 
 func verifyHeapster(master NodeDeets, sshKey string) error {
 	// create volumes for alertmanager, prometheus-server and grafana
-	planFile := "kismatic-testing.yaml"
-	fp := install.FilePlanner{File: planFile}
-	plan, err := fp.Read()
+	name, err := runImport()
 	if err != nil {
-		return fmt.Errorf("error reading plan: %v", err)
-	}
-	name := plan.Cluster.Name
-	importCmd := exec.Command("./kismatic", "import", planFile)
-	if err := importCmd.Run(); err != nil {
-		return fmt.Errorf("error importing plan: %v", err)
+		return err
 	}
 	cmd := exec.Command("./kismatic", "volume", "add", name, "1")
 	cmd.Stdout = os.Stdout

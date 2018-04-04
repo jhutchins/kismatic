@@ -58,7 +58,7 @@ The error: %v
 		Expect(err).ToNot(HaveOccurred())
 	})
 	Describe("Attempting to mutate a cluster", func() {
-		Context("by scaling the cluster", func() {
+		Context("by scaling the cluster up", func() {
 			It("should scale up without any overrides", func() {
 				name, clusterNames = clusterNames[0], clusterNames[1:]
 				path, clusterPaths = clusterPaths[0], clusterPaths[1:]

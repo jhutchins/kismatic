@@ -6,7 +6,6 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/apprenda/kismatic/pkg/install"
 	. "github.com/onsi/ginkgo"
 )
 
@@ -269,16 +268,9 @@ func extractCurrentKismaticInstaller() {
 }
 func upgradeCluster(online bool) {
 	// Perform upgrade
-	planFileName := "kismatic-testing.yaml"
-	fp := install.FilePlanner{File: planFileName}
-	planFromFile, err := fp.Read()
+	clusterName, err := runImport()
 	if err != nil {
-		FailIfError(err, "Couldn't read from plan")
-	}
-	clusterName := planFromFile.Cluster.Name
-	importCmd := exec.Command("./kismatic", "import", planFileName)
-	if err := importCmd.Run(); err != nil {
-		FailIfError(err, "Couldn't import plan")
+		FailIfError(err)
 	}
 	cmd := exec.Command("./kismatic", "upgrade", "offline", clusterName)
 	if online {
