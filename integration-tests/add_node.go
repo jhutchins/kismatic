@@ -24,7 +24,7 @@ func addNodeToCluster(newNode NodeDeets, sshKey string, labels []string, roles [
 	if err := importCmd.Run(); err != nil {
 		return fmt.Errorf("error importing plan: %v", err)
 	}
-	cmd := exec.Command("./kismatic", "install", "add-node", name, "--roles", strings.Join(roles, ","), newNode.Hostname, newNode.PublicIP, newNode.PrivateIP)
+	cmd := exec.Command("./kismatic", "add-node", name, "--roles", strings.Join(roles, ","), newNode.Hostname, newNode.PublicIP, newNode.PrivateIP)
 	if len(labels) > 0 {
 		cmd.Args = append(cmd.Args, "--labels", strings.Join(labels, ","))
 	}

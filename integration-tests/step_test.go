@@ -31,7 +31,7 @@ var _ = Describe("install step commands", func() {
 				if err := importCmd.Run(); err != nil {
 					Expect(err).ToNot(HaveOccurred())
 				}
-				c := exec.Command("./kismatic", "install", "step", name, "_kube-apiserver.yaml")
+				c := exec.Command("./kismatic", "step", name, "_kube-apiserver.yaml")
 				c.Stdout = os.Stdout
 				c.Stderr = os.Stderr
 				err = c.Run()

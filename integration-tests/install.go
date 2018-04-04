@@ -143,7 +143,7 @@ func installKismaticWithPlan(plan PlanAWS) error {
 	if err := importCmd.Run(); err != nil {
 		return fmt.Errorf("error importing plan: %v", err)
 	}
-	cmd := exec.Command("./kismatic", "install", "apply", name)
+	cmd := exec.Command("./kismatic", "apply", name)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
@@ -176,7 +176,7 @@ func validateKismaticWithPlan(plan PlanAWS) error {
 	if err := importCmd.Run(); err != nil {
 		return fmt.Errorf("error importing plan: %v", err)
 	}
-	cmd := exec.Command("./kismatic", "install", "validate", name)
+	cmd := exec.Command("./kismatic", "validate", name)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
@@ -248,7 +248,7 @@ func installKismaticWithABadNode() {
 	if err := importCmd.Run(); err != nil {
 		Expect(err).ToNot(HaveOccurred())
 	}
-	cmd := exec.Command("./kismatic", "install", "validate", name)
+	cmd := exec.Command("./kismatic", "validate", name)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()
@@ -257,7 +257,7 @@ func installKismaticWithABadNode() {
 	}
 
 	By("Well, try it anyway")
-	cmd = exec.Command("./kismatic", "install", "apply", name)
+	cmd = exec.Command("./kismatic", "apply", name)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()

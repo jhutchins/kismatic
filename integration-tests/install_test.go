@@ -3,8 +3,8 @@ package integration_tests
 import (
 	"io/ioutil"
 	"os"
-	"time"
 	"path/filepath"
+	"time"
 
 	yaml "gopkg.in/yaml.v2"
 
@@ -34,7 +34,7 @@ var _ = Describe("kismatic", func() {
 		Context("and just hitting enter", func() {
 			It("should result in the output of a well formed default plan file", func() {
 				By("Outputing a file")
-				c := exec.Command("./kismatic", "install", "plan")
+				c := exec.Command("./kismatic", "plan")
 				helpbytes, helperr := c.Output()
 				Expect(helperr).To(BeNil())
 				helpText := string(helpbytes)
@@ -47,7 +47,7 @@ var _ = Describe("kismatic", func() {
 				Expect(helpText).To(ContainSubstring("2 ingress nodes"))
 				Expect(helpText).To(ContainSubstring("0 storage nodes"))
 				Expect(helpText).To(ContainSubstring("0 nfs volumes"))
-				file := filepath.Join("clusters","kubernetes","kismatic-cluster.yaml")
+				file := filepath.Join("clusters", "kubernetes", "kismatic-cluster.yaml")
 				Expect(FileExists(file)).To(Equal(true))
 
 				By("Reading generated plan file")

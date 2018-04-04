@@ -200,7 +200,7 @@ func runValidate(planFile string) error {
 	if err := importCmd.Run(); err != nil {
 		FailIfError(err, "Couldn't import plan")
 	}
-	cmd := exec.Command("./kismatic", "install", "validate", clusterName)
+	cmd := exec.Command("./kismatic", "validate", clusterName)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()

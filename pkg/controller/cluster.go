@@ -15,6 +15,7 @@ import (
 )
 
 const (
+	unmanaged       = "unmanaged"
 	planning        = "planning"
 	planningFailed  = "planningFailed"
 	planned         = "planned"

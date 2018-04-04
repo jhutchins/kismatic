@@ -177,7 +177,7 @@ func standupGlusterCluster(planFile *os.File, nodes []NodeDeets, sshKey string, 
 	if distro == Ubuntu1604LTS { // Ubuntu doesn't have python installed
 		By("Running the all play with the plan")
 
-		cmd := exec.Command("./kismatic", "install", "step", clusterName, "_all.yaml")
+		cmd := exec.Command("./kismatic", "step", clusterName, "_all.yaml")
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		err = cmd.Run()
@@ -198,14 +198,14 @@ func standupGlusterCluster(planFile *os.File, nodes []NodeDeets, sshKey string, 
 	FailIfError(err, "Error setting permissions on kubectl dummy")
 
 	By("Running the packages-repo play with the plan")
-	cmd := exec.Command("./kismatic", "install", "step", clusterName, "_packages-repo.yaml")
+	cmd := exec.Command("./kismatic", "step", clusterName, "_packages-repo.yaml")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()
 	FailIfError(err, "Error running package-repo play")
 
 	By("Running the storage play with the plan")
-	cmd = exec.Command("./kismatic", "install", "step", clusterName, "_storage.yaml")
+	cmd = exec.Command("./kismatic", "step", clusterName, "_storage.yaml")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()

@@ -11,7 +11,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var clusterNames,clusterPaths []string
+var clusterNames, clusterPaths []string
 var name, path string
 
 var _ = Describe("Mutations", func() {
@@ -34,14 +34,14 @@ var _ = Describe("Mutations", func() {
 		}
 		install.WritePlanTemplate(planOpts, &fp)
 		skipIfAWSCredsMissing()
-		cmd := exec.Command("./kismatic", "install", "provision", name)
+		cmd := exec.Command("./kismatic", "provision", name)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		err := cmd.Run()
 		Expect(err).ToNot(HaveOccurred())
 	})
-	AfterEach(func () {
-		cmd := exec.Command("./kismatic", "install", "destroy", name)
+	AfterEach(func() {
+		cmd := exec.Command("./kismatic", "destroy", name)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		err := cmd.Run()
@@ -68,7 +68,7 @@ The error: %v
 				plan.Worker.ExpectedCount++
 				plan.Master.ExpectedCount++
 				fp.Write(plan)
-				cmd := exec.Command("./kismatic", "install", "provision", name)
+				cmd := exec.Command("./kismatic", "provision", name)
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
 				err = cmd.Run()
@@ -84,7 +84,7 @@ The error: %v
 				Expect(err).NotTo(HaveOccurred())
 				plan.Worker.ExpectedCount--
 				fp.Write(plan)
-				cmd := exec.Command("./kismatic", "install", "provision", name, "--allow-destruction")
+				cmd := exec.Command("./kismatic", "provision", name, "--allow-destruction")
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
 				err = cmd.Run()
@@ -100,7 +100,7 @@ The error: %v
 				Expect(err).NotTo(HaveOccurred())
 				plan.Worker.ExpectedCount--
 				fp.Write(plan)
-				cmd := exec.Command("./kismatic", "install", "provision", name)
+				cmd := exec.Command("./kismatic", "provision", name)
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
 				err = cmd.Run()
