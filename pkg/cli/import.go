@@ -38,6 +38,9 @@ func NewCmdImport(out io.Writer) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts.srcPlanFilePath = args[0]
+			path := filepath.Join(assetsFolder, defaultDBName)
+			s, _ := CreateStoreIfNotExists(path)
+			defer s.Close()
 			fp := install.FilePlanner{File: opts.srcPlanFilePath}
 			if !fp.PlanExists() {
 				return planFileNotFoundErr{filename: opts.srcPlanFilePath}
@@ -49,7 +52,16 @@ func NewCmdImport(out io.Writer) *cobra.Command {
 			clusterName := plan.Cluster.Name
 			// Pull destinations from the name
 			opts.dstPlanFilePath, opts.dstGeneratedAssetsDir, opts.dstRunsDir = generateDirsFromName(clusterName)
-			return doImport(out, clusterName, opts)
+			spec := plan.ConvertToSpec()
+			spec.Status.CurrentState = "unmanaged"
+			spec.Spec.DesiredState = "unmanaged"
+			if impErr := doImport(out, clusterName, opts); impErr != nil {
+				if err := s.Put(clusterName, spec); err != nil {
+					return fmt.Errorf("%v: %v", impErr, err)
+				}
+				return impErr
+			}
+			return s.Put(clusterName, spec)
 		},
 	}
 	cmd.Flags().StringVarP(&opts.srcKeyFile, "ssh-key", "k", "", "path to the ssh key file")

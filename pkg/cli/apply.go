@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/apprenda/kismatic/pkg/install"
 	"github.com/apprenda/kismatic/pkg/util"
@@ -44,6 +45,9 @@ func NewCmdApply(out io.Writer, installOpts *installOpts) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clusterName := args[0]
+			path := filepath.Join(assetsFolder, defaultDBName)
+			s, _ := CreateStoreIfNotExists(path)
+			defer s.Close()
 			if exists, err := CheckClusterExists(clusterName); !exists {
 				return err
 			}
@@ -70,7 +74,21 @@ func NewCmdApply(out io.Writer, installOpts *installOpts) *cobra.Command {
 				skipPreFlight:      applyOpts.skipPreFlight,
 				restartServices:    applyOpts.restartServices,
 			}
-			return applyCmd.run()
+			plan, err := planner.Read()
+			if err != nil {
+				return err
+			}
+			spec := plan.ConvertToSpec()
+			spec.Status.CurrentState = "installed"
+			spec.Spec.DesiredState = "installed"
+			if appErr := applyCmd.run(); appErr != nil {
+				spec.Status.CurrentState = "installFailed"
+				if err := s.Put(clusterName, spec); err != nil {
+					return fmt.Errorf("%v: %v", appErr, err)
+				}
+				return appErr
+			}
+			return s.Put(clusterName, spec)
 		},
 	}
 

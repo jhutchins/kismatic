@@ -3,11 +3,16 @@ package cli
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
+	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/apprenda/kismatic/pkg/store"
 )
 
 const (
+	defaultDBName        = "clusterStates.db"
 	defaultPlanName      = "kismatic-cluster.yaml"
 	defaultClusterName   = "kubernetes"
 	defaultGeneratedName = "generated"
@@ -65,5 +70,24 @@ func CheckPlaybookExists(play string) (bool, error) {
 			return true, nil
 		}
 	}
-	return false, fmt.Errorf("playbook %s not found")
+	return false, fmt.Errorf("playbook %s not found", play)
+}
+
+func CreateStoreIfNotExists(path string) (store.ClusterStore, *log.Logger) {
+	parent, _ := filepath.Split(path)
+	logger := log.New(os.Stdout, "[kismatic] ", log.LstdFlags|log.Lshortfile)
+	if err := os.MkdirAll(parent, 0700); err != nil {
+		logger.Fatalf("Error creating store directory structure: %v", err)
+	}
+	// Create the store
+	s, err := store.New(path, 0600, logger)
+	if err != nil {
+		logger.Fatalf("Error creating store: %v", err)
+	}
+	err = s.CreateBucket(clustersBucket)
+	if err != nil {
+		logger.Fatalf("Error creating bucket in store: %v", err)
+	}
+	clusterStore := store.NewClusterStore(s, clustersBucket)
+	return clusterStore, logger
 }
