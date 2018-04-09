@@ -14,18 +14,19 @@ type clustersOpts struct {
 	verbose bool
 }
 
-// NewCmdLs creates a new ls command
-func NewCmdLs(out io.Writer) *cobra.Command {
+// NewCmdList creates a new list command
+func NewCmdList(out io.Writer) *cobra.Command {
 	opts := &clustersOpts{}
 
 	cmd := &cobra.Command{
-		Use:   "ls",
-		Short: "list the names of the clusters currently being managed",
+		Use:     "list",
+		Aliases: []string{"ls"},
+		Short:   "list the names of the clusters currently being managed",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return doList(out, *opts)
 		},
 	}
-	cmd.Flags().BoolVarP(&opts.verbose, "verbose", "v", false, "print the verbose details of the clusters dir.")
+	cmd.Flags().BoolVarP(&opts.verbose, "verbose", "v", false, "print the verbose details")
 	return cmd
 }
 
