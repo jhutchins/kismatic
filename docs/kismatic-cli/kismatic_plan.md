@@ -1,19 +1,19 @@
-## kismatic ip
+## kismatic plan
 
-retrieve the IP address of the cluster
+plan your Kubernetes cluster and generate a plan file
 
 ### Synopsis
 
-retrieve the IP address of the cluster
+plan your Kubernetes cluster and generate a plan file
 
 ```
-kismatic ip CLUSTER_NAME [flags]
+kismatic plan [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for ip
+  -h, --help   help for plan
 ```
 
 ### SEE ALSO
