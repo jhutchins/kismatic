@@ -53,12 +53,19 @@ func NewCmdImport(out io.Writer) *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVarP(&opts.srcKeyFile, "ssh-key", "k", "", "path to the ssh key file")
-	cmd.Flags().StringVarP(&opts.srcGeneratedAssetsDir, "generated-assets-dir", "g", "", "path to the *CONTENTS* of a generated assets folder")
-	cmd.Flags().StringVarP(&opts.srcRunsDir, "runs-dir", "r", "", "path to the *CONTENTS* of a runs directory")
+	cmd.Flags().StringVarP(&opts.srcGeneratedAssetsDir, "generated-assets-dir", "g", "", "path to the directory where assets generated during the installation process were stored")
+	cmd.Flags().StringVarP(&opts.srcRunsDir, "runs-dir", "r", "", "path to the directory where artifacts created during the installation process were stored")
 	return cmd
 }
 
 func doImport(out io.Writer, name string, opts *importOpts) error {
+	exists, err := CheckClusterExists(name)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return fmt.Errorf("unable to import cluster: cluster with name %s already exists", name)
+	}
 	if opts.srcKeyFile != "" {
 		if err := ssh.ValidUnencryptedPrivateKey(opts.srcKeyFile); err != nil {
 			return err
