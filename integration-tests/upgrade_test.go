@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"time"
 
-	"github.com/apprenda/kismatic/pkg/install"
 	. "github.com/onsi/ginkgo"
 )
 
@@ -163,7 +163,7 @@ var _ = Describe("Upgrade", func() {
 
 								// Cleanup old cluster file and create a new one
 								By("Recreating kismatic-testing.yaml file")
-								err = os.Remove("kismatic-testing.yaml")
+								err = os.Remove(filepath.Join("clusters", "kubernetes", "kismatic-cluster.yaml"))
 								FailIfError(err)
 								opts = installOptions{
 									disconnectedInstallation: true,
@@ -230,7 +230,7 @@ var _ = Describe("Upgrade", func() {
 
 								// Cleanup old cluster file and create a new one
 								By("Recreating kismatic-testing.yaml file")
-								err = os.Remove("kismatic-testing.yaml")
+								err = os.Remove(filepath.Join("clusters", "kubernetes", "kismatic-cluster.yaml"))
 								FailIfError(err)
 								opts = installOptions{
 									disconnectedInstallation: true,
@@ -269,16 +269,9 @@ func extractCurrentKismaticInstaller() {
 }
 func upgradeCluster(online bool) {
 	// Perform upgrade
-	planFileName := "kismatic-testing.yaml"
-	fp := install.FilePlanner{File: planFileName}
-	planFromFile, err := fp.Read()
+	clusterName, err := runImport(planFile)
 	if err != nil {
-		FailIfError(err, "Couldn't read from plan")
-	}
-	clusterName := planFromFile.Cluster.Name
-	importCmd := exec.Command("./kismatic", "import", planFileName)
-	if err := importCmd.Run(); err != nil {
-		FailIfError(err, "Couldn't import plan")
+		FailIfError(err)
 	}
 	cmd := exec.Command("./kismatic", "upgrade", "offline", clusterName)
 	if online {

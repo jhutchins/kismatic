@@ -3,7 +3,6 @@ package install
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	"path/filepath"
@@ -639,40 +638,4 @@ func validateAllowedAddress(address string) bool {
 		}
 	}
 	return true
-}
-
-// ValidateClusterExists does a simple check to see if the cluster folder+plan file exists in clusters
-func ValidateClusterExists(name string) (bool, error) {
-	files, err := ioutil.ReadDir("clusters")
-	if err != nil {
-		return false, err
-	}
-	for _, finfo := range files {
-		if finfo.Name() == name {
-			possiblePlans, err := ioutil.ReadDir(filepath.Join("clusters", finfo.Name()))
-			if err != nil {
-				return false, err
-			}
-			for _, possiblePlan := range possiblePlans {
-				if possiblePlan.Name() == "kismatic-cluster.yaml" {
-					return true, nil
-				}
-			}
-		}
-	}
-	return false, nil
-}
-
-// ValidatePlaybookExists does a check to make sure the step exists
-func ValidatePlaybookExists(play string) (bool, error) {
-	plays, err := ioutil.ReadDir("ansible/playbooks")
-	if err != nil {
-		return false, err
-	}
-	for _, finfo := range plays {
-		if finfo.Name() == play {
-			return true, nil
-		}
-	}
-	return false, nil
 }

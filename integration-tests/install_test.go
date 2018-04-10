@@ -3,8 +3,8 @@ package integration_tests
 import (
 	"io/ioutil"
 	"os"
-	"time"
 	"path/filepath"
+	"time"
 
 	yaml "gopkg.in/yaml.v2"
 
@@ -47,7 +47,7 @@ var _ = Describe("kismatic", func() {
 				Expect(helpText).To(ContainSubstring("2 ingress nodes"))
 				Expect(helpText).To(ContainSubstring("0 storage nodes"))
 				Expect(helpText).To(ContainSubstring("0 nfs volumes"))
-				file := filepath.Join("clusters","kubernetes","kismatic-cluster.yaml")
+				file := filepath.Join("clusters", "kubernetes", "kismatic-cluster.yaml")
 				Expect(FileExists(file)).To(Equal(true))
 
 				By("Reading generated plan file")
@@ -149,7 +149,7 @@ var _ = Describe("kismatic", func() {
 					err := installKismaticMini(node, sshKey)
 					Expect(err).ToNot(HaveOccurred())
 					// Ensure preflight checks are idempotent on CentOS7
-					err = runValidate("kismatic-testing.yaml")
+					err = runValidate(filepath.Join("clusters", "kubernetes", "kismatic-cluster.yaml"))
 					Expect(err).ToNot(HaveOccurred())
 				})
 			})
@@ -161,7 +161,7 @@ var _ = Describe("kismatic", func() {
 					err := installKismaticMini(node, sshKey)
 					Expect(err).ToNot(HaveOccurred())
 					// Ensure preflight checks are idempotent on RedHat7
-					err = runValidate("kismatic-testing.yaml")
+					err = runValidate(filepath.Join("clusters", "kubernetes", "kismatic-cluster.yaml"))
 					Expect(err).ToNot(HaveOccurred())
 				})
 			})
@@ -173,7 +173,7 @@ var _ = Describe("kismatic", func() {
 					err := installKismaticMini(node, sshKey)
 					Expect(err).ToNot(HaveOccurred())
 					// Ensure preflight checks are idempotent on Ubuntu 1604
-					err = runValidate("kismatic-testing.yaml")
+					err = runValidate(filepath.Join("clusters", "kubernetes", "kismatic-cluster.yaml"))
 					Expect(err).ToNot(HaveOccurred())
 				})
 			})
@@ -329,7 +329,7 @@ var _ = Describe("kismatic", func() {
 						})
 
 						sub.It("should allow for running preflight checks idempotently", func() error {
-							return runValidate("kismatic-testing.yaml")
+							return runValidate(filepath.Join("clusters", "kubernetes", "kismatic-cluster.yaml"))
 						})
 					})
 				})
@@ -397,7 +397,7 @@ var _ = Describe("kismatic", func() {
 						})
 
 						sub.It("should allow for running preflight checks idempotently", func() error {
-							return runValidate("kismatic-testing.yaml")
+							return runValidate(filepath.Join("clusters", "kubernetes", "kismatic-cluster.yaml"))
 						})
 					})
 				})

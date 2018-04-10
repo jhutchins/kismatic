@@ -59,12 +59,31 @@ func NewCmdImport(out io.Writer) *cobra.Command {
 }
 
 func doImport(out io.Writer, name string, opts *importOpts) error {
-	exists, err := CheckClusterExists(name)
-	if err != nil {
-		return err
+
+	parent, _ := filepath.Split(opts.dstGeneratedAssetsDir)
+	if err := os.MkdirAll(parent, 0700); err != nil {
+		return fmt.Errorf("error creating destination %s: %v", parent, err)
 	}
+	exists, cerr := CheckClusterExists(name)
 	if exists {
-		return fmt.Errorf("unable to import cluster: cluster with name %s already exists", name)
+		fp := install.FilePlanner{File: opts.dstPlanFilePath}
+		ofp := install.FilePlanner{File: opts.srcPlanFilePath}
+		p, err := fp.Read()
+		if err != nil {
+			return err
+		}
+		op, err := ofp.Read()
+		if err != nil {
+			return err
+		}
+		if p.Equal(*op) {
+			fmt.Fprintf(out, "Identical plan detected in destination %s", opts.dstPlanFilePath)
+			return nil
+		}
+		if cerr != nil {
+			return cerr
+		}
+		return fmt.Errorf("unable to import cluster: cluster already exists")
 	}
 	if opts.srcKeyFile != "" {
 		if err := ssh.ValidUnencryptedPrivateKey(opts.srcKeyFile); err != nil {
@@ -77,47 +96,37 @@ func doImport(out io.Writer, name string, opts *importOpts) error {
 		fmt.Fprintf(out, "Successfully copied SSH key from %s to %s.\n", opts.srcKeyFile, opts.dstKeyFile)
 	}
 	if opts.srcGeneratedAssetsDir != "" {
-		dstGenParent, _ := filepath.Split(opts.dstGeneratedAssetsDir)
+
 		_, srcGenFolder := filepath.Split(opts.srcGeneratedAssetsDir)
-		if err := os.MkdirAll(dstGenParent, 0700); err != nil {
-			return fmt.Errorf("error creating destination %s: %v", dstGenParent, err)
-		}
-		cpGenCmd := exec.Command("cp", "-rf", opts.srcGeneratedAssetsDir, dstGenParent)
+		cpGenCmd := exec.Command("cp", "-rf", opts.srcGeneratedAssetsDir, parent)
 		if err := cpGenCmd.Run(); err != nil {
-			return fmt.Errorf("error copying from %s to %s: %v", opts.srcGeneratedAssetsDir, dstGenParent, err)
+			return fmt.Errorf("error copying from %s to %s: %v", opts.srcGeneratedAssetsDir, parent, err)
 		}
 		//Rename whatever you imported from to generated
 		//using `pax` would've been easier, but I didn't want to risk it not being
 		//on whatever distro ends up being the target
-		intermediate := filepath.Join(dstGenParent, srcGenFolder)
-		mvGenCmd := exec.Command("mv", intermediate, opts.dstGeneratedAssetsDir)
+		intermediate := filepath.Join(parent, srcGenFolder)
+		mvGenCmd := exec.Command("mv", "-f", intermediate, opts.dstGeneratedAssetsDir)
 		if err := mvGenCmd.Run(); err != nil {
 			return fmt.Errorf("error moving intermediary dir from %s to %s: %v", intermediate, opts.dstGeneratedAssetsDir, err)
 		}
 		fmt.Fprintf(out, "Successfully copied generated dir from %s to %s.\n", opts.srcGeneratedAssetsDir, opts.dstGeneratedAssetsDir)
 	}
 	if opts.srcRunsDir != "" {
-		dstRunsParent, _ := filepath.Split(opts.dstRunsDir)
+		parent, _ := filepath.Split(opts.dstRunsDir)
 		_, srcRunsFolder := filepath.Split(opts.srcRunsDir)
-		if err := os.MkdirAll(dstRunsParent, 0700); err != nil {
-			return fmt.Errorf("error creating destination %s: %v", dstRunsParent, err)
-		}
-		cpRunsCmd := exec.Command("cp", "-rf", opts.srcRunsDir, dstRunsParent)
+		cpRunsCmd := exec.Command("cp", "-rf", opts.srcRunsDir, parent)
 		if err := cpRunsCmd.Run(); err != nil {
-			return fmt.Errorf("error copying from %s to %s: %v", opts.srcRunsDir, dstRunsParent, err)
+			return fmt.Errorf("error copying from %s to %s: %v", opts.srcRunsDir, parent, err)
 		}
-		intermediate := filepath.Join(dstRunsParent, srcRunsFolder)
-		mvGenCmd := exec.Command("mv", intermediate, opts.dstRunsDir)
+		intermediate := filepath.Join(parent, srcRunsFolder)
+		mvGenCmd := exec.Command("mv", "-f", intermediate, opts.dstRunsDir)
 		if err := mvGenCmd.Run(); err != nil {
 			return fmt.Errorf("error moving intermediary dir from %s to %s: %v", intermediate, opts.dstRunsDir, err)
 		}
 		fmt.Fprintf(out, "Successfully copied runs dir from %s to %s.\n", opts.srcRunsDir, opts.dstRunsDir)
 	}
-	dstPlanParent, _ := filepath.Split(opts.dstPlanFilePath)
-	if err := os.MkdirAll(dstPlanParent, 0700); err != nil {
-		return fmt.Errorf("error creating destination %s: %v", dstPlanParent, err)
-	}
-	cpPlanCmd := exec.Command("cp", "-rf", opts.srcPlanFilePath, opts.dstPlanFilePath)
+	cpPlanCmd := exec.Command("cp", "-f", opts.srcPlanFilePath, opts.dstPlanFilePath)
 	if err := cpPlanCmd.Run(); err != nil {
 		return fmt.Errorf("error copying from %s to %s: %v", opts.srcPlanFilePath, opts.dstPlanFilePath, err)
 	}

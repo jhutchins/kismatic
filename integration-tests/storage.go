@@ -10,13 +10,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/apprenda/kismatic/pkg/install"
 	. "github.com/onsi/ginkgo"
 )
 
 func testAddVolumeVerifyGluster(aws infrastructureProvisioner, distro linuxDistro) {
 	WithInfrastructure(NodeCount{Worker: 5}, distro, aws, func(nodes provisionedNodes, sshKey string) {
-		planFile, err := os.Create("kismatic-testing.yaml")
+		planFile, err := os.Create(planFile)
 		FailIfError(err, "error creating file for kismatic plan")
 		defer planFile.Close()
 
@@ -100,18 +99,11 @@ func verifyGlusterVolume(storageNode NodeDeets, sshKey string, name string, repl
 }
 
 func createVolume(planFile *os.File, name string, replicationCount int, distributionCount int, reclaimPolicy string, accessModes []string) error {
-	planFileName := planFile.Name()
-	fp := install.FilePlanner{File: planFileName}
-	planFromFile, err := fp.Read()
+	name, err := runImport(planFile.Name())
 	if err != nil {
 		return err
 	}
-	clusterName := planFromFile.Cluster.Name
-	importCmd := exec.Command("./kismatic", "import", planFileName)
-	if err := importCmd.Run(); err != nil {
-		return err
-	}
-	cmd := exec.Command("./kismatic", "volume", "add", clusterName,
+	cmd := exec.Command("./kismatic", "volume", "add", name,
 		"--replica-count", strconv.Itoa(replicationCount),
 		"--distribution-count", strconv.Itoa(distributionCount),
 		"-c", "kismatic-test",
@@ -128,15 +120,8 @@ func createVolume(planFile *os.File, name string, replicationCount int, distribu
 }
 
 func deleteVolume(planFile *os.File, name string) error {
-	planFileName := planFile.Name()
-	fp := install.FilePlanner{File: planFileName}
-	planFromFile, err := fp.Read()
+	clusterName, err := runImport(planFile.Name())
 	if err != nil {
-		return err
-	}
-	clusterName := planFromFile.Cluster.Name
-	importCmd := exec.Command("./kismatic", "import", planFileName)
-	if err := importCmd.Run(); err != nil {
 		return err
 	}
 	cmd := exec.Command("./kismatic", "volume", "delete", clusterName, name, "--force")
@@ -162,22 +147,15 @@ func standupGlusterCluster(planFile *os.File, nodes []NodeDeets, sshKey string, 
 	FailIfError(err, "Couldn't parse template")
 
 	err = template.Execute(planFile, &plan)
-	planFileName := planFile.Name()
-	fp := install.FilePlanner{File: planFileName}
-	planFromFile, err := fp.Read()
+	name, err := runImport(planFile.Name())
 	if err != nil {
-		FailIfError(err, "Couldn't read from plan")
-	}
-	clusterName := planFromFile.Cluster.Name
-	importCmd := exec.Command("./kismatic", "import", planFileName)
-	if err := importCmd.Run(); err != nil {
 		FailIfError(err, "Couldn't import plan")
 	}
 	FailIfError(err, "Error filling in plan template")
 	if distro == Ubuntu1604LTS { // Ubuntu doesn't have python installed
 		By("Running the all play with the plan")
 
-		cmd := exec.Command("./kismatic", "install", "step", clusterName, "_all.yaml")
+		cmd := exec.Command("./kismatic", "install", "step", name, "_all.yaml")
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		err = cmd.Run()
@@ -198,14 +176,14 @@ func standupGlusterCluster(planFile *os.File, nodes []NodeDeets, sshKey string, 
 	FailIfError(err, "Error setting permissions on kubectl dummy")
 
 	By("Running the packages-repo play with the plan")
-	cmd := exec.Command("./kismatic", "install", "step", clusterName, "_packages-repo.yaml")
+	cmd := exec.Command("./kismatic", "install", "step", name, "_packages-repo.yaml")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()
 	FailIfError(err, "Error running package-repo play")
 
 	By("Running the storage play with the plan")
-	cmd = exec.Command("./kismatic", "install", "step", clusterName, "_storage.yaml")
+	cmd = exec.Command("./kismatic", "install", "step", name, "_storage.yaml")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()
@@ -223,7 +201,7 @@ func testStatefulWorkload(nodes provisionedNodes, sshKey string) error {
 	}
 
 	By("Creating a storage volume")
-	plan, err := os.Open("kismatic-testing.yaml")
+	plan, err := os.Open(planFile)
 	if err != nil {
 		return fmt.Errorf("Failed to open plan file: %v", err)
 	}

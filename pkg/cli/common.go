@@ -33,16 +33,17 @@ func generateDirsFromName(clusterName string) (string, string, string) {
 }
 
 // CheckClusterExists does a simple check to see if the cluster folder+plan file exists in clusters
+// returns true even in the cases where an error exists if the scan hasn't completed.
 func CheckClusterExists(name string) (bool, error) {
 	files, err := ioutil.ReadDir(assetsFolder)
 	if err != nil {
-		return false, err
+		return true, err
 	}
 	for _, finfo := range files {
 		if finfo.Name() == name {
 			possiblePlans, err := ioutil.ReadDir(filepath.Join(assetsFolder, finfo.Name()))
 			if err != nil {
-				return false, err
+				return true, err
 			}
 			for _, possiblePlan := range possiblePlans {
 				if possiblePlan.Name() == defaultPlanName {
@@ -65,5 +66,5 @@ func CheckPlaybookExists(play string) (bool, error) {
 			return true, nil
 		}
 	}
-	return false, fmt.Errorf("playbook %s not found")
+	return false, fmt.Errorf("playbook %s not found", play)
 }

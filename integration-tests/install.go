@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/apprenda/kismatic/pkg/install"
 	homedir "github.com/mitchellh/go-homedir"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -132,16 +131,9 @@ func installKismaticWithPlan(plan PlanAWS) error {
 	writePlanFile(plan)
 
 	By("Punch it Chewie!")
-	planFile := "kismatic-testing.yaml"
-	fp := install.FilePlanner{File: planFile}
-	planFromFile, err := fp.Read()
+	name, err := runImport(planFile)
 	if err != nil {
-		return fmt.Errorf("error reading plan: %v", err)
-	}
-	name := planFromFile.Cluster.Name
-	importCmd := exec.Command("./kismatic", "import", planFile)
-	if err := importCmd.Run(); err != nil {
-		return fmt.Errorf("error importing plan: %v", err)
+		return err
 	}
 	cmd := exec.Command("./kismatic", "install", "apply", name)
 	cmd.Stdout = os.Stdout
@@ -165,16 +157,9 @@ func validateKismaticWithPlan(plan PlanAWS) error {
 	writePlanFile(plan)
 
 	By("Validate Plan")
-	planFile := "kismatic-testing.yaml"
-	fp := install.FilePlanner{File: planFile}
-	planFromFile, err := fp.Read()
+	name, err := runImport(planFile)
 	if err != nil {
-		return fmt.Errorf("error reading plan: %v", err)
-	}
-	name := planFromFile.Cluster.Name
-	importCmd := exec.Command("./kismatic", "import", planFile)
-	if err := importCmd.Run(); err != nil {
-		return fmt.Errorf("error importing plan: %v", err)
+		return err
 	}
 	cmd := exec.Command("./kismatic", "install", "validate", name)
 	cmd.Stdout = os.Stdout
@@ -187,7 +172,7 @@ func writePlanFile(plan PlanAWS) {
 	template, err := template.New("planAWSOverlay").Parse(planAWSOverlay)
 	FailIfError(err, "Couldn't parse template")
 
-	path := "kismatic-testing.yaml"
+	path := planFile
 	_, err = os.Stat(path)
 	// create file if not exists
 	if os.IsNotExist(err) {
@@ -227,7 +212,7 @@ func installKismaticWithABadNode() {
 		SSHKeyFile:          sshKey,
 	}
 	By("Writing plan file out to disk")
-	f, err := os.Create("kismatic-testing.yaml")
+	f, err := os.Create(planFile)
 	FailIfError(err, "Error waiting for nodes")
 	defer f.Close()
 	w := bufio.NewWriter(f)
@@ -237,15 +222,8 @@ func installKismaticWithABadNode() {
 	f.Close()
 
 	By("Validing our plan")
-	planFile := "kismatic-testing.yaml"
-	fp := install.FilePlanner{File: planFile}
-	planFromFile, err := fp.Read()
+	name, err := runImport(planFile)
 	if err != nil {
-		Expect(err).ToNot(HaveOccurred())
-	}
-	name := planFromFile.Cluster.Name
-	importCmd := exec.Command("./kismatic", "import", planFile)
-	if err := importCmd.Run(); err != nil {
 		Expect(err).ToNot(HaveOccurred())
 	}
 	cmd := exec.Command("./kismatic", "install", "validate", name)
