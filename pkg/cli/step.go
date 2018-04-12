@@ -44,9 +44,6 @@ func NewCmdStep(out io.Writer, opts *installOpts) *cobra.Command {
 				return err
 			}
 			planPath, generatedPath, runsPath := generateDirsFromName(clusterName)
-			if playExist, err := CheckPlaybookExists(args[1]); !playExist {
-				return err
-			}
 			execOpts := install.ExecutorOptions{
 				GeneratedAssetsDirectory: generatedPath,
 				OutputFormat:             stepCmd.outputFormat,
@@ -57,7 +54,7 @@ func NewCmdStep(out io.Writer, opts *installOpts) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			stepCmd.task = args[1]
+			stepCmd.task = fmt.Sprintf("_%s.yaml", args[1])
 			stepCmd.planFile = planPath
 			stepCmd.planner = &install.FilePlanner{File: planPath}
 			stepCmd.executor = executor

@@ -67,7 +67,7 @@ install:
 	    make bin/$(GOOS)/kismatic build-inspector-host copy-kismatic copy-playbooks copy-inspector
 
 dist: shallow-clean
-	@echo "Running dist inside contianer"
+	@echo "Running dist inside container"
 	@docker run                                \
 	    --rm                                   \
 	    -e GOOS="$(GOOS)"                      \
@@ -100,7 +100,7 @@ test:
 
 integration-test: 
 	mkdir -p tmp
-	@echo "Running integration tests inside contianer"
+	@echo "Running integration tests inside container"
 	@docker run                                                 \
 	    --rm                                                    \
 	    -e GOOS="linux"                                         \
@@ -121,7 +121,7 @@ integration-test:
 
 focus-integration-test: 
 	mkdir -p tmp
-	@echo "Running integration tests inside contianer"
+	@echo "Running integration tests inside container"
 	@docker run                                                 \
 	    --rm                                                    \
 	    -e FOCUS="$(FOCUS)"                                     \
@@ -143,7 +143,7 @@ focus-integration-test:
 
 slow-integration-test: 
 	mkdir -p tmp
-	@echo "Running integration tests inside contianer"
+	@echo "Running integration tests inside container"
 	@docker run                                                 \
 	    --rm                                                    \
 	    -e GOOS="linux"                                         \

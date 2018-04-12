@@ -11,11 +11,9 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var clusterNames,clusterPaths []string
-var name, path string
-
 var _ = Describe("Mutations", func() {
-
+	var clusterNames, clusterPaths []string
+	var name, path string
 	BeforeEach(func() {
 		dir := setupTestWorkingDir()
 		os.Chdir(dir)
@@ -40,7 +38,7 @@ var _ = Describe("Mutations", func() {
 		err := cmd.Run()
 		Expect(err).ToNot(HaveOccurred())
 	})
-	AfterEach(func () {
+	AfterEach(func() {
 		cmd := exec.Command("./kismatic", "install", "destroy", name)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr

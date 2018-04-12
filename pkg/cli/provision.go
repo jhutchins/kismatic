@@ -103,7 +103,8 @@ func NewCmdDestroy(in io.Reader, out io.Writer, opts *installOpts) *cobra.Comman
 				StateDir:        filepath.Join(path, assetsFolder),
 				SecretsGetter:   environmentSecretsGetter{},
 			}
-
+			// TODO: also purge from database/filesystem - separate command?
+			// MOVED TO "RMI" PR
 			return tf.Destroy(plan.Provisioner.Provider, plan.Cluster.Name)
 		},
 	}

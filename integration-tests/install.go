@@ -129,20 +129,15 @@ func buildPlan(nodes provisionedNodes, installOpts installOptions, sshKey string
 
 func installKismaticWithPlan(plan PlanAWS) error {
 	writePlanFile(plan)
-
 	By("Punch it Chewie!")
-	name, err := runImport(planFile)
-	if err != nil {
-		return err
-	}
-	cmd := exec.Command("./kismatic", "install", "apply", name)
+	cmd := exec.Command("./kismatic", "install", "apply", defaultClusterName)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
 	if err := cmd.Run(); err != nil {
 		// run diagnostics on error
 		fmt.Println("----- Running diagnose command -----")
-		diagsCmd := exec.Command("./kismatic", "diagnose", name)
+		diagsCmd := exec.Command("./kismatic", "diagnose", defaultClusterName)
 		diagsCmd.Stdout = os.Stdout
 		diagsCmd.Stderr = os.Stderr
 		if errDiags := diagsCmd.Run(); errDiags != nil {
@@ -155,13 +150,8 @@ func installKismaticWithPlan(plan PlanAWS) error {
 
 func validateKismaticWithPlan(plan PlanAWS) error {
 	writePlanFile(plan)
-
 	By("Validate Plan")
-	name, err := runImport(planFile)
-	if err != nil {
-		return err
-	}
-	cmd := exec.Command("./kismatic", "install", "validate", name)
+	cmd := exec.Command("./kismatic", "install", "validate", defaultClusterName)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
@@ -172,11 +162,13 @@ func writePlanFile(plan PlanAWS) {
 	template, err := template.New("planAWSOverlay").Parse(planAWSOverlay)
 	FailIfError(err, "Couldn't parse template")
 
-	path := planFile
-	_, err = os.Stat(path)
+	_, err = os.Stat(clusterPath)
 	// create file if not exists
 	if os.IsNotExist(err) {
-		f, err := os.Create(path)
+		parent, _ := filepath.Split(clusterPath)
+		err := os.MkdirAll(parent, 0777)
+		FailIfError(err, "Error creating directory structure")
+		f, err := os.Create(clusterPath)
 		FailIfError(err, "Error creating plan")
 		defer f.Close()
 		w := bufio.NewWriter(f)
@@ -187,10 +179,6 @@ func writePlanFile(plan PlanAWS) {
 }
 
 func installKismaticWithABadNode() {
-	By("Building a template")
-	template, err := template.New("planAWSOverlay").Parse(planAWSOverlay)
-	FailIfError(err, "Couldn't parse template")
-
 	By("Faking infrastructure")
 	fakeNode := NodeDeets{
 		id:       "FakeId",
@@ -212,21 +200,10 @@ func installKismaticWithABadNode() {
 		SSHKeyFile:          sshKey,
 	}
 	By("Writing plan file out to disk")
-	f, err := os.Create(planFile)
-	FailIfError(err, "Error waiting for nodes")
-	defer f.Close()
-	w := bufio.NewWriter(f)
-	err = template.Execute(w, &plan)
-	FailIfError(err, "Error filling in plan template")
-	w.Flush()
-	f.Close()
+	writePlanFile(plan)
 
 	By("Validing our plan")
-	name, err := runImport(planFile)
-	if err != nil {
-		Expect(err).ToNot(HaveOccurred())
-	}
-	cmd := exec.Command("./kismatic", "install", "validate", name)
+	cmd := exec.Command("./kismatic", "install", "validate", defaultClusterName)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()
@@ -235,7 +212,7 @@ func installKismaticWithABadNode() {
 	}
 
 	By("Well, try it anyway")
-	cmd = exec.Command("./kismatic", "install", "apply", name)
+	cmd = exec.Command("./kismatic", "install", "apply", defaultClusterName)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()

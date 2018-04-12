@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"time"
 
 	"github.com/apprenda/kismatic/pkg/install"
@@ -12,9 +13,14 @@ import (
 )
 
 const (
-	planFile = "kismatic-testing.yaml"
+	defaultPlanName    = "kismatic-cluster.yaml"
+	defaultClusterName = "kubernetes"
+	assetsFolder       = "clusters"
 )
 
+var clusterPath = filepath.Join(assetsFolder, defaultClusterName, defaultPlanName)
+
+// runImport runs a `kismatic import TARGET`
 func runImport(planFileName string) (string, error) {
 	fp := install.FilePlanner{File: planFileName}
 	plan, err := fp.Read()

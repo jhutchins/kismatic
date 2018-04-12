@@ -19,11 +19,7 @@ var _ = Describe("install step commands", func() {
 			WithMiniInfrastructure(Ubuntu1604LTS, aws, func(node NodeDeets, sshKey string) {
 				err := installKismaticMini(node, sshKey)
 				Expect(err).ToNot(HaveOccurred())
-				name, err := runImport(planFile)
-				if err != nil {
-					Expect(err).ToNot(HaveOccurred())
-				}
-				c := exec.Command("./kismatic", "install", "step", name, "_kube-apiserver.yaml")
+				c := exec.Command("./kismatic", "install", "step", defaultClusterName, "kube-apiserver")
 				c.Stdout = os.Stdout
 				c.Stderr = os.Stderr
 				err = c.Run()

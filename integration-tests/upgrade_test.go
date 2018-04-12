@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"time"
 
 	. "github.com/onsi/ginkgo"
@@ -163,7 +162,7 @@ var _ = Describe("Upgrade", func() {
 
 								// Cleanup old cluster file and create a new one
 								By("Recreating kismatic-testing.yaml file")
-								err = os.Remove(filepath.Join("clusters", "kubernetes", "kismatic-cluster.yaml"))
+								err = os.Remove(clusterPath)
 								FailIfError(err)
 								opts = installOptions{
 									disconnectedInstallation: true,
@@ -230,7 +229,7 @@ var _ = Describe("Upgrade", func() {
 
 								// Cleanup old cluster file and create a new one
 								By("Recreating kismatic-testing.yaml file")
-								err = os.Remove(filepath.Join("clusters", "kubernetes", "kismatic-cluster.yaml"))
+								err = os.Remove(clusterPath)
 								FailIfError(err)
 								opts = installOptions{
 									disconnectedInstallation: true,
@@ -269,20 +268,16 @@ func extractCurrentKismaticInstaller() {
 }
 func upgradeCluster(online bool) {
 	// Perform upgrade
-	clusterName, err := runImport(planFile)
-	if err != nil {
-		FailIfError(err)
-	}
-	cmd := exec.Command("./kismatic", "upgrade", "offline", clusterName)
+	cmd := exec.Command("./kismatic", "upgrade", "offline", defaultClusterName)
 	if online {
-		cmd = exec.Command("./kismatic", "upgrade", "online", clusterName, "--ignore-safety-checks")
+		cmd = exec.Command("./kismatic", "upgrade", "online", defaultClusterName, "--ignore-safety-checks")
 	}
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	if err := cmd.Run(); err != nil {
 		fmt.Println("Running diagnostics command")
 		// run diagnostics on error
-		diagsCmd := exec.Command("./kismatic", "diagnose", clusterName)
+		diagsCmd := exec.Command("./kismatic", "diagnose", defaultClusterName)
 		diagsCmd.Stdout = os.Stdout
 		diagsCmd.Stderr = os.Stderr
 		if errDiags := diagsCmd.Run(); errDiags != nil {

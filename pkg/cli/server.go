@@ -23,6 +23,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	defaultInsecurePort = "8080"
+	defaultSecurePort   = "8443"
+	defaultTimeout      = 10 * time.Second
+)
+
 type serverOptions struct {
 	port       string
 	certFile   string

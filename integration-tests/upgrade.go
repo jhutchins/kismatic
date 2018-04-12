@@ -32,11 +32,7 @@ func assertClusterVersionIsCurrent() {
 }
 
 func assertClusterVersion(version string) {
-	clusterName, err := runImport(planFile)
-	if err != nil {
-		FailIfError(err, "Couldn't import plan")
-	}
-	cmd := exec.Command("./kismatic", "info", clusterName, "-o", "json")
+	cmd := exec.Command("./kismatic", "info", defaultClusterName, "-o", "json")
 	out, err := cmd.Output()
 	FailIfError(err)
 	info := infoOutput{}
