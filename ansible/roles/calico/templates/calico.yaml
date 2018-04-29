@@ -3,7 +3,7 @@
 # This manifest includes the following component versions:
 #   calico/node:v2.6.8
 #   calico/cni:v1.11.4
-#   calico/kube-controllers:v1.0.3
+#   calico/kube-controllers:v1.0.4
 
 # This ConfigMap is used to configure a self-hosted Calico installation.
 kind: ConfigMap
