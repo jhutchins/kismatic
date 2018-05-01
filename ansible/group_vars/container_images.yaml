@@ -19,10 +19,10 @@ official_images:
     version: v2.6.9
   calico_ctl:
     name: calico/ctl
-    version: v1.6.3
+    version: v1.6.4
   calico_cni:
     name: calico/cni
-    version: v1.11.4
+    version: v1.11.5
   calico_kube_controller:
     name: calico/kube-controllers
     version: v1.0.4
