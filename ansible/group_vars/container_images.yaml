@@ -16,7 +16,7 @@ official_images:
     version: "{{ versions.kubernetes }}"
   calico_node:
     name: calico/node
-    version: v2.6.8
+    version: v2.6.9
   calico_ctl:
     name: calico/ctl
     version: v1.6.3
